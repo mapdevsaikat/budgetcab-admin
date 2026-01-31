@@ -1,6 +1,6 @@
-# MaahiCabs Admin Dashboard
+# BudgetCab Admin Dashboard
 
-A fully responsive admin web application for managing MaahiCabs bookings, drivers, and pricing.
+A fully responsive admin web application for managing BudgetCab bookings, drivers, and pricing.
 
 ## Features
 

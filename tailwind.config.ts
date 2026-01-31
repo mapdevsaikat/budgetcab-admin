@@ -9,9 +9,9 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        'maahi-brand': '#2E3192',
-        'maahi-accent': '#00A99D',
-        'maahi-warn': '#FFC107',
+        'maahi-brand': '#E00000', // BudgetCab red - primary brand color
+        'maahi-accent': '#555555', // Dark gray - secondary color from logo
+        'maahi-warn': '#FFC107', // Amber - accent for highlights
       },
     },
   },

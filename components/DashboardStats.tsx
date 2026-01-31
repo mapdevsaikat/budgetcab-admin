@@ -37,11 +37,11 @@ export default function DashboardStats({ stats, timeSeriesData }: DashboardStats
             name: 'Bookings Received',
             value: stats.total_bookings,
             icon: Calendar,
-            color: 'bg-indigo-500',
+            color: 'bg-red-500',
             modalKey: 'bookings',
             chartData: timeSeriesData.bookingsTimeSeries,
             chartTitle: 'Bookings Over Time',
-            chartColor: '#6366f1',
+            chartColor: '#E00000',
         },
         {
             name: 'Online Drivers',

@@ -136,14 +136,14 @@ export default function RegisterPage() {
           <div className="flex justify-center mb-4">
             <img
               src="/android-chrome-192x192.png"
-              alt="MaahiCabs Logo"
+              alt="BudgetCab Logo"
               className="h-16 w-16 object-contain"
             />
           </div>
           <h1 className="text-3xl font-bold">
-            <span className="text-maahi-brand">Maah</span>
-            <span className="text-maahi-warn">iC</span>
-            <span className="text-maahi-brand">abs</span>
+            <span className="text-maahi-brand">Budget</span>
+            <span className="text-maahi-warn">C</span>
+            <span className="text-maahi-brand">ab</span>
             <span className="text-maahi-brand"> Admin</span>
           </h1>
           <p className="mt-2 text-gray-600">Create admin account</p>

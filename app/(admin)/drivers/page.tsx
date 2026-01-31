@@ -27,3 +27,6 @@ export default async function DriversPage() {
   );
 }
 
+// Cache for 60 seconds
+export const revalidate = 60;
+

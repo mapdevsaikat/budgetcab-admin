@@ -45,6 +45,7 @@ export interface Driver {
   is_active: boolean;
   shift_start: string | null;
   shift_end: string | null;
+  vehicle_type_name: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -57,6 +58,7 @@ export interface PricingRule {
   start_time: string | null;
   end_time: string | null;
   priority: number | null;
+  night_stay_rate: number | null;
   created_at: string;
   updated_at: string;
 }

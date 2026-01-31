@@ -69,14 +69,14 @@ export default function LoginPage() {
           <div className="flex justify-center mb-4">
             <img
               src="/android-chrome-192x192.png"
-              alt="MaahiCabs Logo"
+              alt="BudgetCab Logo"
               className="h-16 w-16 object-contain"
             />
           </div>
           <h1 className="text-3xl font-extrabold">
-            <span className="text-maahi-brand">Maah</span>
-            <span className="text-maahi-warn">iC</span>
-            <span className="text-maahi-brand">abs</span>
+            <span className="text-maahi-brand">Budget</span>
+            <span className="text-maahi-warn">C</span>
+            <span className="text-maahi-brand">ab</span>
             <span className="text-maahi-brand"> Admin</span>
           </h1>
           <p className="mt-2 text-sm text-gray-600">
@@ -113,7 +113,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-maahi-accent focus:border-maahi-accent sm:text-sm transition duration-150 ease-in-out"
-                  placeholder="admin@maahicabs.com"
+                  placeholder="admin@BudgetCab.com"
                 />
               </div>
             </div>
@@ -141,7 +141,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-lg text-white bg-maahi-brand hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-maahi-brand disabled:opacity-50 disabled:cursor-not-allowed transition duration-150 ease-in-out shadow-md hover:shadow-lg"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-lg text-white bg-maahi-brand hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-maahi-brand disabled:opacity-50 disabled:cursor-not-allowed transition duration-150 ease-in-out shadow-md hover:shadow-lg"
             >
               <span className="absolute left-0 inset-y-0 flex items-center pl-3">
                 <LogIn className="h-5 w-5 text-maahi-warn group-hover:text-yellow-300 transition ease-in-out duration-150" aria-hidden="true" />
@@ -151,7 +151,7 @@ export default function LoginPage() {
           </div>
 
           <div className="text-center mt-4">
-            <Link href="/register" className="font-medium text-maahi-accent hover:text-teal-600 transition-colors">
+            <Link href="/register" className="font-medium text-maahi-accent hover:text-gray-700 transition-colors">
               Create admin account
             </Link>
           </div>

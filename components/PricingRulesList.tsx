@@ -19,6 +19,7 @@ export default function PricingRulesList({ initialRules }: PricingRulesListProps
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [priority, setPriority] = useState('0');
+  const [nightStayRate, setNightStayRate] = useState('500');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
@@ -32,6 +33,7 @@ export default function PricingRulesList({ initialRules }: PricingRulesListProps
       setStartTime(rule.start_time || '');
       setEndTime(rule.end_time || '');
       setPriority(rule.priority?.toString() || '0');
+      setNightStayRate(rule.night_stay_rate?.toString() || '500');
     } else {
       setEditingRule(null);
       setBaseFare('');
@@ -40,6 +42,7 @@ export default function PricingRulesList({ initialRules }: PricingRulesListProps
       setStartTime('');
       setEndTime('');
       setPriority('0');
+      setNightStayRate('500');
     }
     setIsModalOpen(true);
     setError(null);
@@ -54,6 +57,7 @@ export default function PricingRulesList({ initialRules }: PricingRulesListProps
     setStartTime('');
     setEndTime('');
     setPriority('0');
+    setNightStayRate('500');
     setError(null);
   };
 
@@ -65,6 +69,7 @@ export default function PricingRulesList({ initialRules }: PricingRulesListProps
       const baseFareNum = baseFare ? parseFloat(baseFare) : null;
       const perKmRateNum = perKmRate ? parseFloat(perKmRate) : null;
       const priorityNum = priority ? parseInt(priority) : 0;
+      const nightStayRateNum = nightStayRate ? parseFloat(nightStayRate) : null;
 
       if (editingRule) {
         // Update existing rule
@@ -77,6 +82,7 @@ export default function PricingRulesList({ initialRules }: PricingRulesListProps
             start_time: startTime || null,
             end_time: endTime || null,
             priority: priorityNum,
+            night_stay_rate: nightStayRateNum,
             updated_at: new Date().toISOString(),
           })
           .eq('id', editingRule.id)
@@ -97,6 +103,7 @@ export default function PricingRulesList({ initialRules }: PricingRulesListProps
             start_time: startTime || null,
             end_time: endTime || null,
             priority: priorityNum,
+            night_stay_rate: nightStayRateNum,
           })
           .select()
           .single();
@@ -152,7 +159,7 @@ export default function PricingRulesList({ initialRules }: PricingRulesListProps
                         Priority: {rule.priority}
                       </span>
                     </div>
-                    <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                    <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                       <div className="flex items-center">
                         <DollarSign className="w-4 h-4 mr-2 text-gray-400" />
                         <span className="text-gray-600">Base Fare:</span>
@@ -165,6 +172,13 @@ export default function PricingRulesList({ initialRules }: PricingRulesListProps
                         <span className="text-gray-600">Per KM:</span>
                         <span className="ml-2 font-medium text-gray-900">
                           ₹{rule.per_km_rate?.toFixed(2) || '0.00'}
+                        </span>
+                      </div>
+                      <div className="flex items-center">
+                        <DollarSign className="w-4 h-4 mr-2 text-gray-400" />
+                        <span className="text-gray-600">Night Stay:</span>
+                        <span className="ml-2 font-medium text-gray-900">
+                          ₹{rule.night_stay_rate?.toFixed(2) || '500.00'}
                         </span>
                       </div>
                       <div className="text-gray-600">
@@ -287,6 +301,23 @@ export default function PricingRulesList({ initialRules }: PricingRulesListProps
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-maahi-brand focus:border-maahi-brand"
                   placeholder="0.00"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Night Stay Rate (₹)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={nightStayRate}
+                  onChange={(e) => setNightStayRate(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-maahi-brand focus:border-maahi-brand"
+                  placeholder="500.00"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Charge per night for overnight bookings (default: ₹500)
+                </p>
               </div>
             </div>
 

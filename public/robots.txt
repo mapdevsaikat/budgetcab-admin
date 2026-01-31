@@ -1,5 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.maahicabs.com/sitemap.xml
+Sitemap: https://www.BudgetCab.com/sitemap.xml
 

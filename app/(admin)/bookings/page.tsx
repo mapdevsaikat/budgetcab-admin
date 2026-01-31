@@ -16,7 +16,8 @@ export default async function DashboardPage() {
         name
       )
     `)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(100); // Limit to recent 100 bookings for faster load
 
   if (error) {
     console.error('Error fetching bookings:', error);
@@ -32,4 +33,7 @@ export default async function DashboardPage() {
     </div>
   );
 }
+
+// Cache for 30 seconds
+export const revalidate = 30;
 

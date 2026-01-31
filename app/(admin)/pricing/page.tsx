@@ -28,3 +28,6 @@ export default async function PricingPage() {
   );
 }
 
+// Cache for 5 minutes (pricing changes infrequently)
+export const revalidate = 300;
+

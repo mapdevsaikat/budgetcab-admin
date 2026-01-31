@@ -1,4 +1,4 @@
-# Understanding Roles in MaahiCabs Admin
+# Understanding Roles in BudgetCab Admin
 
 ## Which Role Field Controls Access?
 

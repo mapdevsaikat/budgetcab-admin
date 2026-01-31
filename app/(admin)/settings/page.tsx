@@ -13,7 +13,7 @@ export default function SettingsPage() {
                 <section className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="bg-maahi-brand px-6 py-4">
                         <h2 className="text-lg font-semibold text-white">Notifications</h2>
-                        <p className="text-indigo-100 text-sm">Configure how you receive alerts</p>
+                        <p className="text-red-100 text-sm">Configure how you receive alerts</p>
                     </div>
                     <div className="p-6">
                         <PushNotificationManager />

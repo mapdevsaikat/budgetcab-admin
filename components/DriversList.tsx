@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Driver } from '@/lib/types';
 import { Plus, Edit, Check, X } from 'lucide-react';
@@ -16,11 +16,31 @@ export default function DriversList({ initialDrivers }: DriversListProps) {
   const [name, setName] = useState('');
   const [shiftStart, setShiftStart] = useState('');
   const [shiftEnd, setShiftEnd] = useState('');
+  const [vehicleTypeName, setVehicleTypeName] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [driverToDeactivate, setDriverToDeactivate] = useState<Driver | null>(null);
+  const [vehicleTypes, setVehicleTypes] = useState<Array<{ name: string }>>([]);
   const supabase = createClient();
+
+  useEffect(() => {
+    // Fetch vehicle types
+    const fetchVehicleTypes = async () => {
+      const { data, error } = await supabase
+        .from('vehicle_types')
+        .select('name')
+        .eq('is_active', true)
+        .order('display_order')
+        .order('name');
+      
+      if (!error && data) {
+        setVehicleTypes(data);
+      }
+    };
+    fetchVehicleTypes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const openModal = (driver?: Driver) => {
     if (driver) {
@@ -28,12 +48,14 @@ export default function DriversList({ initialDrivers }: DriversListProps) {
       setName(driver.name || '');
       setShiftStart(driver.shift_start || '');
       setShiftEnd(driver.shift_end || '');
+      setVehicleTypeName(driver.vehicle_type_name || '');
       setIsActive(driver.is_active);
     } else {
       setEditingDriver(null);
       setName('');
       setShiftStart('');
       setShiftEnd('');
+      setVehicleTypeName('');
       setIsActive(true);
     }
     setIsModalOpen(true);
@@ -46,6 +68,7 @@ export default function DriversList({ initialDrivers }: DriversListProps) {
     setName('');
     setShiftStart('');
     setShiftEnd('');
+    setVehicleTypeName('');
     setIsActive(true);
     setError(null);
   };
@@ -63,6 +86,7 @@ export default function DriversList({ initialDrivers }: DriversListProps) {
             name,
             shift_start: shiftStart || null,
             shift_end: shiftEnd || null,
+            vehicle_type_name: vehicleTypeName || null,
             is_active: isActive,
             updated_at: new Date().toISOString(),
           })
@@ -81,6 +105,7 @@ export default function DriversList({ initialDrivers }: DriversListProps) {
             name,
             shift_start: shiftStart || null,
             shift_end: shiftEnd || null,
+            vehicle_type_name: vehicleTypeName || null,
             is_active: isActive,
           })
           .select()
@@ -198,7 +223,7 @@ export default function DriversList({ initialDrivers }: DriversListProps) {
                               {isCurrentlyOnline ? 'Online' : driver.is_active ? 'Offline' : 'Inactive'}
                             </span>
                           </div>
-                          <div className="mt-1 text-sm text-gray-500">
+                          <div className="mt-1 text-sm text-gray-500 space-y-1">
                             {driver.shift_start && driver.shift_end ? (
                               <span className="flex items-center space-x-1">
                                 <span className="text-gray-400">Shift:</span>
@@ -217,6 +242,12 @@ export default function DriversList({ initialDrivers }: DriversListProps) {
                               </span>
                             ) : (
                               <span className="text-gray-400 italic">No shift time set</span>
+                            )}
+                            {driver.vehicle_type_name && (
+                              <span className="flex items-center space-x-1">
+                                <span className="text-gray-400">Vehicle:</span>
+                                <span className="font-medium">{driver.vehicle_type_name}</span>
+                              </span>
                             )}
                           </div>
                         </div>
@@ -312,6 +343,24 @@ export default function DriversList({ initialDrivers }: DriversListProps) {
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-maahi-brand focus:border-maahi-brand"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Vehicle Type
+                </label>
+                <select
+                  value={vehicleTypeName}
+                  onChange={(e) => setVehicleTypeName(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-maahi-brand focus:border-maahi-brand"
+                >
+                  <option value="">Select vehicle type (optional)</option>
+                  {vehicleTypes.map((vt) => (
+                    <option key={vt.name} value={vt.name}>
+                      {vt.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="flex items-center">

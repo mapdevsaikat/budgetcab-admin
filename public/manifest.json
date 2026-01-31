@@ -1,11 +1,11 @@
 {
-    "name": "MaahiCabs Admin",
+    "name": "BudgetCab Admin",
     "short_name": "Maahi Admin",
-    "description": "Admin dashboard for MaahiCabs",
+    "description": "Admin dashboard for BudgetCab",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",
-    "theme_color": "#000000",
+    "theme_color": "#E00000",
     "icons": [
         {
             "src": "/android-chrome-192x192.png",

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
@@ -10,18 +10,10 @@ export const metadata: Metadata = {
   title: "BudgetCab Admin",
   description: "Admin dashboard for managing BudgetCab bookings, drivers, and pricing",
   manifest: "/manifest.json",
-  themeColor: "#E00000",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "BudgetCab Admin",
-  },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    viewportFit: "cover",
   },
   icons: {
     icon: [
@@ -34,6 +26,15 @@ export const metadata: Metadata = {
       { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#E00000",
 };
 
 export default function RootLayout({

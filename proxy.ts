@@ -42,7 +42,7 @@ export async function proxy(request: NextRequest) {
 
   // Protect admin routes - just check if authenticated
   // Admin check is done in layout via requireAdmin()
-  const protectedRoutes = ['/bookings', '/dashboard', '/drivers', '/pricing'];
+  const protectedRoutes = ['/bookings', '/dashboard', '/drivers', '/pricing', '/settings'];
   const isProtectedRoute = protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route));
 
   if (isProtectedRoute) {
@@ -53,7 +53,7 @@ export async function proxy(request: NextRequest) {
 
   // Redirect authenticated users away from login/register pages
   if ((request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register') && isAuthenticated) {
-    return NextResponse.redirect(new URL('/bookings', request.url));
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   return response;
@@ -67,7 +67,7 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|json|js|txt)$).*)',
   ],
 };
 

@@ -121,7 +121,7 @@ export default function RegisterPage() {
 
       // Redirect to dashboard - middleware will verify session
       // Use replace to avoid back button issues
-      window.location.replace('/bookings');
+      window.location.replace('/dashboard');
     } catch (err: any) {
       console.error('[Register] Registration error:', err);
       setError(err.message || 'An unexpected error occurred. Please try again.');

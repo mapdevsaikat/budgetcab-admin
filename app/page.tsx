@@ -5,7 +5,7 @@ export default async function Home() {
   const user = await getAuthUser();
 
   if (user) {
-    redirect('/bookings');
+    redirect('/dashboard');
   } else {
     redirect('/login');
   }

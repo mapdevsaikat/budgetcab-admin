@@ -53,8 +53,8 @@ export default function LoginPage() {
         return;
       }
 
-      // Redirect to dashboard - middleware will verify session
-      window.location.replace('/bookings');
+      // Redirect to dashboard - use correct route path
+      window.location.replace('/dashboard');
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'An unexpected error occurred. Please try again.');

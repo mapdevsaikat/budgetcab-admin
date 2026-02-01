@@ -16,6 +16,79 @@ export default function BookingNotifications() {
 
     const supabase = createClient();
 
+    const sendPushNotification = async (booking: Booking) => {
+      try {
+        // Get the service worker registration
+        const registration = await navigator.serviceWorker.ready;
+        
+        // Get push subscription
+        const subscription = await registration.pushManager.getSubscription();
+        
+        if (!subscription) {
+          console.log('No push subscription found');
+          return;
+        }
+
+        // Prepare notification data
+        const pickupLocation = booking.pickup_address || 'Location not specified';
+        const customerName = booking.user_first_name || 'Customer';
+        const bookingRef = booking.booking_ref;
+        const price = booking.price_total ? `₹${booking.price_total.toFixed(2)}` : 'Price TBD';
+
+        const notificationTitle = `New Booking: ${bookingRef}`;
+        const notificationBody = `${customerName} - ${pickupLocation}\nFare: ${price}`;
+        
+        // Show local notification immediately (works even if app is open)
+        // Using type assertion for vibrate property which is valid in browser API but not in TypeScript types
+        await registration.showNotification(notificationTitle, {
+          body: notificationBody,
+          icon: '/android-chrome-192x192.png',
+          badge: '/favicon-32x32.png',
+          vibrate: [200, 100, 200],
+          tag: `booking-${booking.id}`,
+          requireInteraction: false,
+          data: {
+            url: `/bookings`,
+            bookingId: booking.id,
+            bookingRef: bookingRef,
+          },
+          actions: [
+            {
+              action: 'view',
+              title: 'View Booking',
+            },
+          ],
+        } as NotificationOptions);
+
+        // Also send push notification via server (if Edge Function is set up)
+        // This ensures notifications work even when the app is closed
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            // Call Edge Function to send push notification to all admin devices
+            await supabase.functions.invoke('send-booking-notification', {
+              body: {
+                booking: {
+                  id: booking.id,
+                  booking_ref: bookingRef,
+                  user_first_name: booking.user_first_name,
+                  pickup_address: booking.pickup_address,
+                  price_total: booking.price_total,
+                  status: booking.status,
+                },
+              },
+            });
+          }
+        } catch (error) {
+          // Edge Function might not be set up, that's okay
+          // Local notification will still work
+          console.log('Edge Function not available, using local notifications only');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
+    };
+
     // Function to check for new bookings
     const checkForNewBookings = async () => {
       try {
@@ -84,78 +157,6 @@ export default function BookingNotifications() {
       }
     };
   }, []);
-
-  const sendPushNotification = async (booking: Booking) => {
-    try {
-      // Get the service worker registration
-      const registration = await navigator.serviceWorker.ready;
-      
-      // Get push subscription
-      const subscription = await registration.pushManager.getSubscription();
-      
-      if (!subscription) {
-        console.log('No push subscription found');
-        return;
-      }
-
-      // Prepare notification data
-      const pickupLocation = booking.pickup_address || 'Location not specified';
-      const customerName = booking.user_first_name || 'Customer';
-      const bookingRef = booking.booking_ref;
-      const price = booking.price_total ? `₹${booking.price_total.toFixed(2)}` : 'Price TBD';
-
-      const notificationTitle = `New Booking: ${bookingRef}`;
-      const notificationBody = `${customerName} - ${pickupLocation}\nFare: ${price}`;
-      
-      // Show local notification immediately (works even if app is open)
-      await registration.showNotification(notificationTitle, {
-        body: notificationBody,
-        icon: '/android-chrome-192x192.png',
-        badge: '/favicon-32x32.png',
-        vibrate: [200, 100, 200],
-        tag: `booking-${booking.id}`,
-        requireInteraction: false,
-        data: {
-          url: `/bookings`,
-          bookingId: booking.id,
-          bookingRef: bookingRef,
-        },
-        actions: [
-          {
-            action: 'view',
-            title: 'View Booking',
-          },
-        ],
-      });
-
-      // Also send push notification via server (if Edge Function is set up)
-      // This ensures notifications work even when the app is closed
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          // Call Edge Function to send push notification to all admin devices
-          await supabase.functions.invoke('send-booking-notification', {
-            body: {
-              booking: {
-                id: booking.id,
-                booking_ref: bookingRef,
-                user_first_name: booking.user_first_name,
-                pickup_address: booking.pickup_address,
-                price_total: booking.price_total,
-                status: booking.status,
-              },
-            },
-          });
-        }
-      } catch (error) {
-        // Edge Function might not be set up, that's okay
-        // Local notification will still work
-        console.log('Edge Function not available, using local notifications only');
-      }
-    } catch (error) {
-      console.error('Error sending push notification:', error);
-    }
-  };
 
   return null; // This component doesn't render anything
 }

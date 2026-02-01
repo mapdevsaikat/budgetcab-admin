@@ -119,9 +119,8 @@ export default function RegisterPage() {
       console.log('[Register] Session verified, redirecting to dashboard...');
       console.log('[Register] Final cookies:', document.cookie);
 
-      // Redirect to dashboard - middleware will verify session
-      // Use replace to avoid back button issues
-      window.location.replace('/dashboard');
+      // Redirect to bookings after successful registration
+      window.location.href = '/bookings';
     } catch (err: any) {
       console.error('[Register] Registration error:', err);
       setError(err.message || 'An unexpected error occurred. Please try again.');

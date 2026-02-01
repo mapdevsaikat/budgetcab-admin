@@ -1,20 +1,14 @@
-const CACHE_NAME = 'budgetcab-admin-v1';
-const urlsToCache = [
-  '/',
-  '/dashboard',
-  '/bookings',
-  '/drivers',
-  '/pricing',
-  '/settings',
+const CACHE_NAME = 'budgetcab-admin-bf8d909';
+const STATIC_CACHE = [
   '/manifest.json',
 ];
 
-// Install event - cache resources
+// Install event - cache only static resources
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        return cache.addAll(urlsToCache);
+        return cache.addAll(STATIC_CACHE);
       })
       .catch((error) => {
         console.error('Service Worker: Cache failed', error);
@@ -39,7 +33,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - network first for navigation, cache for static assets
 self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (event.request.method !== 'GET') {
@@ -51,26 +45,72 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request).then((response) => {
-          // Don't cache if not a valid response
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
+  const url = new URL(event.request.url);
+  const isNavigationRequest = event.request.mode === 'navigate';
+  const isStaticAsset = url.pathname.startsWith('/_next/static') || 
+                        url.pathname.startsWith('/_next/image') ||
+                        url.pathname.match(/\.(?:png|jpg|jpeg|svg|gif|webp|ico|woff|woff2|ttf|eot)$/);
 
-          // Clone the response
-          const responseToCache = response.clone();
-
-          caches.open(CACHE_NAME)
-            .then((cache) => {
+  // For navigation requests (page loads), use network-first strategy
+  if (isNavigationRequest) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // Only cache successful responses
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, responseToCache);
             });
-
+          }
           return response;
-        });
+        })
+        .catch(() => {
+          // Network failed, try cache as fallback
+          return caches.match(event.request).then((cachedResponse) => {
+            return cachedResponse || new Response('Offline', { status: 503 });
+          });
+        })
+    );
+    return;
+  }
+
+  // For static assets, use cache-first strategy
+  if (isStaticAsset) {
+    event.respondWith(
+      caches.match(event.request)
+        .then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          return fetch(event.request).then((response) => {
+            if (response && response.status === 200) {
+              const responseToCache = response.clone();
+              caches.open(CACHE_NAME).then((cache) => {
+                cache.put(event.request, responseToCache);
+              });
+            }
+            return response;
+          });
+        })
+    );
+    return;
+  }
+
+  // For other requests, use network-first
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        if (response && response.status === 200) {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return response;
+      })
+      .catch(() => {
+        return caches.match(event.request);
       })
   );
 });

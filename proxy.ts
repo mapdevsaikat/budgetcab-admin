@@ -53,7 +53,16 @@ export async function proxy(request: NextRequest) {
 
   // Redirect authenticated users away from login/register pages
   if ((request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register') && isAuthenticated) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(new URL('/bookings', request.url));
+  }
+
+  // Redirect root path based on authentication
+  if (request.nextUrl.pathname === '/') {
+    if (isAuthenticated) {
+      return NextResponse.redirect(new URL('/bookings', request.url));
+    } else {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
   }
 
   return response;

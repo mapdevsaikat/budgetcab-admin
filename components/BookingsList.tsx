@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Booking, BookingStatus, Driver } from '@/lib/types';
 import { format } from 'date-fns';
-import { Search, Filter, MapPin, Calendar, User, Phone, DollarSign, Edit, Navigation } from 'lucide-react';
+import { Search, Filter, MapPin, Calendar, User, Phone, DollarSign, Edit, Navigation, Share2 } from 'lucide-react';
 import BookingModal from './BookingModal';
+import { getWhatsAppShareUrl } from '@/lib/whatsapp';
 
 interface BookingsListProps {
   initialBookings: Booking[];
@@ -48,7 +49,13 @@ export default function BookingsList({ initialBookings }: BookingsListProps) {
         *,
         drivers (
           id,
-          name
+          name,
+          mobile
+        ),
+        booking_options (
+          cab_type,
+          trip_type,
+          number_of_nights
         )
       `)
       .order('created_at', { ascending: false });
@@ -56,6 +63,13 @@ export default function BookingsList({ initialBookings }: BookingsListProps) {
     if (!error && data) {
       setBookings(data as Booking[]);
     }
+  };
+
+  const handleWhatsAppShare = (booking: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const driverMobile = booking.drivers?.mobile || null;
+    const whatsappUrl = getWhatsAppShareUrl(booking, driverMobile);
+    window.open(whatsappUrl, '_blank');
   };
 
   const handleBookingClick = (booking: Booking) => {
@@ -181,7 +195,7 @@ export default function BookingsList({ initialBookings }: BookingsListProps) {
                   </div>
                 </div>
 
-                <div className="flex items-center pr-4 sm:pr-6 space-x-4">
+                <div className="flex items-center pr-4 sm:pr-6 space-x-2">
                   {booking.pickup_lat && booking.pickup_lng && booking.drop_lat && booking.drop_lng && (
                     <a
                       href={`https://www.google.com/maps/dir/?api=1&origin=${booking.pickup_lat},${booking.pickup_lng}&destination=${booking.drop_lat},${booking.drop_lng}`}
@@ -194,6 +208,13 @@ export default function BookingsList({ initialBookings }: BookingsListProps) {
                       <Navigation className="w-5 h-5 fill-current" />
                     </a>
                   )}
+                  <button
+                    onClick={(e) => handleWhatsAppShare(booking, e)}
+                    className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
+                    title="Share via WhatsApp"
+                  >
+                    <Share2 className="w-5 h-5" />
+                  </button>
                   <button
                     onClick={() => handleBookingClick(booking)}
                     className="p-2 text-gray-400 hover:bg-gray-100 rounded-full transition-colors"

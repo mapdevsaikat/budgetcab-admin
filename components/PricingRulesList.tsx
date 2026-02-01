@@ -9,17 +9,38 @@ interface PricingRulesListProps {
   initialRules: PricingRule[];
 }
 
+const CAB_TYPES = [
+  'Maruti Ertiga Or Similar',
+  'Maruti Swift Dzire Or Similar CNG',
+  'Maruti Swift Dzire Or Similar Diesel',
+  'Tempo Traveller 17 Seater',
+  'Tempo Traveller 26 Seater',
+];
+
+const TRIP_TYPES = ['Local', 'One Way', 'Outstation', 'Airport Transfer'];
+
+const getTripTypeBadgeColor = (tripType: string) => {
+  switch (tripType) {
+    case 'Local':
+      return 'bg-blue-100 text-blue-800';
+    case 'One Way':
+      return 'bg-green-100 text-green-800';
+    case 'Outstation':
+      return 'bg-purple-100 text-purple-800';
+    case 'Airport Transfer':
+      return 'bg-amber-100 text-amber-800';
+    default:
+      return 'bg-gray-100 text-gray-500';
+  }
+};
+
 export default function PricingRulesList({ initialRules }: PricingRulesListProps) {
   const [rules, setRules] = useState<PricingRule[]>(initialRules);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<PricingRule | null>(null);
   const [baseFare, setBaseFare] = useState('');
-  const [perKmRate, setPerKmRate] = useState('');
-  const [timeSlotType, setTimeSlotType] = useState('regular_time');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [priority, setPriority] = useState('0');
-  const [nightStayRate, setNightStayRate] = useState('500');
+  const [cabType, setCabType] = useState('');
+  const [tripType, setTripType] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
@@ -27,22 +48,18 @@ export default function PricingRulesList({ initialRules }: PricingRulesListProps
   const openModal = (rule?: PricingRule) => {
     if (rule) {
       setEditingRule(rule);
-      setBaseFare(rule.base_fare?.toString() || '');
-      setPerKmRate(rule.per_km_rate?.toString() || '');
-      setTimeSlotType(rule.time_slot_type);
-      setStartTime(rule.start_time || '');
-      setEndTime(rule.end_time || '');
-      setPriority(rule.priority?.toString() || '0');
-      setNightStayRate(rule.night_stay_rate?.toString() || '500');
+      // Handle numeric type which might be string or number
+      const fareValue = typeof rule.base_fare === 'string' 
+        ? parseFloat(rule.base_fare).toString() 
+        : rule.base_fare?.toString() || '';
+      setBaseFare(fareValue);
+      setCabType(rule.cab_type || '');
+      setTripType(rule.trip_type || '');
     } else {
       setEditingRule(null);
       setBaseFare('');
-      setPerKmRate('');
-      setTimeSlotType('regular_time');
-      setStartTime('');
-      setEndTime('');
-      setPriority('0');
-      setNightStayRate('500');
+      setCabType('');
+      setTripType('');
     }
     setIsModalOpen(true);
     setError(null);
@@ -52,12 +69,8 @@ export default function PricingRulesList({ initialRules }: PricingRulesListProps
     setIsModalOpen(false);
     setEditingRule(null);
     setBaseFare('');
-    setPerKmRate('');
-    setTimeSlotType('regular_time');
-    setStartTime('');
-    setEndTime('');
-    setPriority('0');
-    setNightStayRate('500');
+    setCabType('');
+    setTripType('');
     setError(null);
   };
 
@@ -66,51 +79,89 @@ export default function PricingRulesList({ initialRules }: PricingRulesListProps
     setError(null);
 
     try {
-      const baseFareNum = baseFare ? parseFloat(baseFare) : null;
-      const perKmRateNum = perKmRate ? parseFloat(perKmRate) : null;
-      const priorityNum = priority ? parseInt(priority) : 0;
-      const nightStayRateNum = nightStayRate ? parseFloat(nightStayRate) : null;
+      if (!cabType || !tripType) {
+        setError('Cab type and trip type are required');
+        setLoading(false);
+        return;
+      }
+
+      const baseFareNum = baseFare ? parseFloat(baseFare) : 0;
+      if (isNaN(baseFareNum) || baseFareNum < 0) {
+        setError('Base fare must be a valid positive number');
+        setLoading(false);
+        return;
+      }
 
       if (editingRule) {
         // Update existing rule
         const { data, error: updateError } = await supabase
-          .from('pricing_rules')
+          .from('pricing')
           .update({
+            cab_type: cabType,
+            trip_type: tripType,
             base_fare: baseFareNum,
-            per_km_rate: perKmRateNum,
-            time_slot_type: timeSlotType,
-            start_time: startTime || null,
-            end_time: endTime || null,
-            priority: priorityNum,
-            night_stay_rate: nightStayRateNum,
             updated_at: new Date().toISOString(),
           })
           .eq('id', editingRule.id)
-          .select()
-          .single();
+          .select();
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Update error:', updateError);
+          throw updateError;
+        }
 
-        setRules(rules.map((r) => (r.id === editingRule.id ? data : r)));
+        if (!data || data.length === 0) {
+          throw new Error('Pricing rule not found or could not be updated');
+        }
+
+        // Convert base_fare to number if it's a string (PostgreSQL numeric type)
+        const updatedRule = {
+          ...data[0],
+          base_fare: typeof data[0].base_fare === 'string' 
+            ? parseFloat(data[0].base_fare) 
+            : data[0].base_fare
+        };
+
+        setRules(rules.map((r) => (r.id === editingRule.id ? updatedRule : r)));
       } else {
+        // Check if combination already exists
+        const existingRule = rules.find(
+          (r) => r.cab_type === cabType && r.trip_type === tripType
+        );
+        if (existingRule) {
+          setError('A pricing rule for this cab type and trip type combination already exists');
+          setLoading(false);
+          return;
+        }
+
         // Create new rule
         const { data, error: insertError } = await supabase
-          .from('pricing_rules')
+          .from('pricing')
           .insert({
+            cab_type: cabType,
+            trip_type: tripType,
             base_fare: baseFareNum,
-            per_km_rate: perKmRateNum,
-            time_slot_type: timeSlotType,
-            start_time: startTime || null,
-            end_time: endTime || null,
-            priority: priorityNum,
-            night_stay_rate: nightStayRateNum,
           })
-          .select()
-          .single();
+          .select();
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Insert error:', insertError);
+          throw insertError;
+        }
 
-        setRules([...rules, data]);
+        if (!data || data.length === 0) {
+          throw new Error('Failed to create pricing rule');
+        }
+
+        // Convert base_fare to number if it's a string (PostgreSQL numeric type)
+        const newRule = {
+          ...data[0],
+          base_fare: typeof data[0].base_fare === 'string' 
+            ? parseFloat(data[0].base_fare) 
+            : data[0].base_fare
+        };
+
+        setRules([...rules, newRule]);
       }
 
       closeModal();
@@ -119,13 +170,6 @@ export default function PricingRulesList({ initialRules }: PricingRulesListProps
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatTimeSlot = (rule: PricingRule) => {
-    if (rule.start_time && rule.end_time) {
-      return `${rule.start_time} - ${rule.end_time}`;
-    }
-    return 'All day';
   };
 
   return (
@@ -152,41 +196,21 @@ export default function PricingRulesList({ initialRules }: PricingRulesListProps
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3">
-                      <span className="text-sm font-medium text-gray-900 capitalize">
-                        {rule.time_slot_type.replace(/_/g, ' ')}
+                      <span className="text-sm font-medium text-gray-900">
+                        {rule.cab_type}
                       </span>
-                      <span className="text-xs text-gray-500">
-                        Priority: {rule.priority}
+                      <span className={`text-xs font-medium px-2 py-1 rounded ${getTripTypeBadgeColor(rule.trip_type)}`}>
+                        {rule.trip_type}
                       </span>
                     </div>
-                    <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                      <div className="flex items-center">
-                        <DollarSign className="w-4 h-4 mr-2 text-gray-400" />
-                        <span className="text-gray-600">Base Fare:</span>
-                        <span className="ml-2 font-medium text-gray-900">
-                          ₹{rule.base_fare?.toFixed(2) || '0.00'}
-                        </span>
-                      </div>
-                      <div className="flex items-center">
-                        <DollarSign className="w-4 h-4 mr-2 text-gray-400" />
-                        <span className="text-gray-600">Per KM:</span>
-                        <span className="ml-2 font-medium text-gray-900">
-                          ₹{rule.per_km_rate?.toFixed(2) || '0.00'}
-                        </span>
-                      </div>
-                      <div className="flex items-center">
-                        <DollarSign className="w-4 h-4 mr-2 text-gray-400" />
-                        <span className="text-gray-600">Night Stay:</span>
-                        <span className="ml-2 font-medium text-gray-900">
-                          ₹{rule.night_stay_rate?.toFixed(2) || '500.00'}
-                        </span>
-                      </div>
-                      <div className="text-gray-600">
-                        <span>Time:</span>
-                        <span className="ml-2 font-medium text-gray-900">
-                          {formatTimeSlot(rule)}
-                        </span>
-                      </div>
+                    <div className="mt-2 flex items-center">
+                      <DollarSign className="w-4 h-4 mr-2 text-gray-400" />
+                      <span className="text-gray-600">Base Fare:</span>
+                      <span className="ml-2 font-medium text-gray-900">
+                        ₹{typeof rule.base_fare === 'string' 
+                          ? parseFloat(rule.base_fare).toFixed(2) 
+                          : rule.base_fare?.toFixed(2) || '0.00'}
+                      </span>
                     </div>
                   </div>
                   <button
@@ -221,102 +245,58 @@ export default function PricingRulesList({ initialRules }: PricingRulesListProps
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Time Slot Type *
+                  Cab Type *
                 </label>
                 <select
-                  value={timeSlotType}
-                  onChange={(e) => setTimeSlotType(e.target.value)}
+                  value={cabType}
+                  onChange={(e) => setCabType(e.target.value)}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-maahi-brand focus:border-maahi-brand"
+                  required
                 >
-                  <option value="regular_time">Regular Time</option>
-                  <option value="office_hours">Office Hours</option>
-                  <option value="night_hours">Night Hours</option>
+                  <option value="">Select Cab Type</option>
+                  {CAB_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Start Time
-                  </label>
-                  <input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-maahi-brand focus:border-maahi-brand"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    End Time
-                  </label>
-                  <input
-                    type="time"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-maahi-brand focus:border-maahi-brand"
-                  />
-                </div>
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Priority
+                  Trip Type *
                 </label>
-                <input
-                  type="number"
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value)}
+                <select
+                  value={tripType}
+                  onChange={(e) => setTripType(e.target.value)}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-maahi-brand focus:border-maahi-brand"
-                  placeholder="0"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Higher priority rules take precedence when time slots overlap
-                </p>
+                  required
+                >
+                  <option value="">Select Trip Type</option>
+                  {TRIP_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Base Fare (₹)
+                  Base Fare (₹) *
                 </label>
                 <input
                   type="number"
                   step="0.01"
+                  min="0"
                   value={baseFare}
                   onChange={(e) => setBaseFare(e.target.value)}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-maahi-brand focus:border-maahi-brand"
                   placeholder="0.00"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Per KM Rate (₹)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={perKmRate}
-                  onChange={(e) => setPerKmRate(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-maahi-brand focus:border-maahi-brand"
-                  placeholder="0.00"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Night Stay Rate (₹)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={nightStayRate}
-                  onChange={(e) => setNightStayRate(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-maahi-brand focus:border-maahi-brand"
-                  placeholder="500.00"
+                  required
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Charge per night for overnight bookings (default: ₹500)
+                  Base fare for this cab type and trip type combination
                 </p>
               </div>
             </div>

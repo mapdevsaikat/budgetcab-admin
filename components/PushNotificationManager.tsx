@@ -28,7 +28,7 @@ export default function PushNotificationManager() {
 
     useEffect(() => {
         if ('serviceWorker' in navigator && 'PushManager' in window) {
-            navigator.serviceWorker.register('/sw.js').then(reg => {
+            navigator.serviceWorker.ready.then(reg => {
                 setRegistration(reg);
                 reg.pushManager.getSubscription().then(sub => {
                     if (sub) {
@@ -36,6 +36,18 @@ export default function PushNotificationManager() {
                         setSubscription(sub);
                         updateSubscriptionOnServer(sub);
                     }
+                });
+            }).catch(() => {
+                // If service worker isn't ready, try to register it
+                navigator.serviceWorker.register('/service-worker.js').then(reg => {
+                    setRegistration(reg);
+                    reg.pushManager.getSubscription().then(sub => {
+                        if (sub) {
+                            setIsSubscribed(true);
+                            setSubscription(sub);
+                            updateSubscriptionOnServer(sub);
+                        }
+                    });
                 });
             });
         }

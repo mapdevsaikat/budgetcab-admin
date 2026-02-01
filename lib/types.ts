@@ -51,14 +51,10 @@ export interface Driver {
 }
 
 export interface PricingRule {
-  id: number;
-  base_fare: number | null;
-  per_km_rate: number | null;
-  time_slot_type: string;
-  start_time: string | null;
-  end_time: string | null;
-  priority: number | null;
-  night_stay_rate: number | null;
+  id: string;
+  cab_type: string;
+  trip_type: string;
+  base_fare: number;
   created_at: string;
   updated_at: string;
 }

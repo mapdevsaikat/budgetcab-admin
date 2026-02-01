@@ -1,5 +1,5 @@
 import { requireAdmin } from '@/lib/auth';
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 import DashboardStats from '@/components/DashboardStats';
 import DashboardDateFilter from '@/components/DashboardDateFilter';
 import { unstable_cache } from 'next/cache';
@@ -7,7 +7,7 @@ import { unstable_cache } from 'next/cache';
 // Cache dashboard data for 60 seconds
 const getCachedDashboardData = unstable_cache(
     async (startDate: string, endDate: string, supabaseUrl: string) => {
-        const supabase = await createClient();
+        const supabase = createServiceClient();
         
         const [statsResult, userGrowthResult, bookingsTimeSeriesResult, revenueTimeSeriesResult] = await Promise.all([
             supabase.rpc('get_dashboard_stats', {

@@ -8,10 +8,10 @@ export default async function PricingPage() {
   const supabase = await createClient();
 
   const { data: pricingRules, error } = await supabase
-    .from('pricing_rules')
+    .from('pricing')
     .select('*')
-    .order('priority', { ascending: false })
-    .order('start_time');
+    .order('cab_type')
+    .order('trip_type');
 
   if (error) {
     console.error('Error fetching pricing rules:', error);
@@ -27,7 +27,4 @@ export default async function PricingPage() {
     </div>
   );
 }
-
-// Cache for 5 minutes (pricing changes infrequently)
-export const revalidate = 300;
 
